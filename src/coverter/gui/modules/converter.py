@@ -125,7 +125,10 @@ class Converter(BaseModel):
                 # Clean the extension (remove dot if present)
                 clean_extension = self.output_extension_type.lstrip('.')
                 output_filename = input_path.stem + f".{clean_extension}"
-                output_full_path = self.output_directory / output_filename # self.output_file is the directory for bulk
+                if self.resize_width > 0 and self.resize_height > 0:
+                    output_full_path = self.output_directory / f"{self.resize_width}x{self.resize_height}_{output_filename}"
+                else:
+                    output_full_path = self.output_directory / output_filename # self.output_file is the directory for bulk
                 
                 if self.perform_conversion(input_path, output_full_path):
                     successful_conversions += 1

@@ -1,5 +1,6 @@
 <RCC>
   <qresource>
+    <file>images/exchange-svgrepo-com.svg</file>
     <file>images/explorer_cTnZKTiAJC.png</file>
     <file>images/icon.png</file>
   </qresource>
