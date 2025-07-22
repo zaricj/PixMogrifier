@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 from typing import List
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QMenu, QListWidget, QFileDialog, QMessageBox, QInputDialog, QLineEdit)
-from PySide6.QtGui import QIcon, QAction, QCloseEvent, QShortcut, QKeySequence, QDropEvent
-from PySide6.QtCore import Qt, Signal, Slot, QFile, QTextStream, QIODevice, QSettings, QThreadPool
+from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QMessageBox, QLineEdit)
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtCore import Slot, QSettings
 
 from resources.ui.ImageFileConverter_ui import Ui_MainWindow
 from widgets.droppable_qlistwidget import DroppableListWidget
@@ -29,6 +29,7 @@ class MainWindow(QMainWindow):
         
         self.replace_listwidget_with_custom()
         self.setup_connections()
+        self.setup_converter_object()
 
         # Settings file for storing application settings
         self.settings = QSettings("Jovan", "ImageConverter")
@@ -50,6 +51,25 @@ class MainWindow(QMainWindow):
         # Remove selected and all for list widget
         self.ui.button_remove_selected.clicked.connect(self.on_remove_item)
         self.ui.button_remove_all.clicked.connect(self.on_remove_all)
+        
+        # ListWidget click event
+        self.ui.listwidget_bulk_conversion.itemClicked.connect(self.set_image_width_and_height_in_spinbox)
+        
+
+    def setup_converter_object(self):
+        ui_output_file: Path = "" # For single file = full path, for bulk = output directory
+        ui_output_extension_type  = "" # Target extension, e.g., "png", "ico"
+        ui_input_files_bulk = [] # List of files for bulk conversion
+        ui_resize_width  = 0 # Target width for resizing, 0 means no resize
+        ui_resize_height = 0 # Target height for resizing, 0 means no resize
+        
+        self.converter = Converter(
+            output_directory = ui_output_file,
+            output_extension_type = ui_output_extension_type,
+            input_files_bulk = ui_input_files_bulk,
+            resize_width = ui_resize_width,
+            resize_height = ui_resize_height
+        )
     
     
     def replace_listwidget_with_custom(self):
@@ -67,6 +87,22 @@ class MainWindow(QMainWindow):
 
         self.ui.listwidget_bulk_conversion = custom_widget
         
+    
+    def set_image_width_and_height_in_spinbox(self):
+        current_row = self.ui.listwidget_bulk_conversion.currentRow()
+        if current_row == -1:
+            return  # No selection made
+
+        item = self.ui.listwidget_bulk_conversion.item(current_row)
+        path_text = self.item_path_splitter(item.text())
+        image_path = Path(path_text[0])
+
+        size = self.converter.get_selected_image_size(image_path)
+        if size is not None:
+            width, height = size
+            self.ui.spinbox_resize_image_width.setValue(width)
+            self.ui.spinbox_resize_image_height.setValue(height)
+
         
     def on_conversion_start(self):
         ui_output_file = Path(self.ui.line_edit_save_image_to.text()) # For single file = full path, for bulk = output directory
@@ -75,7 +111,7 @@ class MainWindow(QMainWindow):
         ui_resize_width  = int(self.ui.spinbox_resize_image_width.text()) # Target width for resizing, 0 means no resize
         ui_resize_height = int(self.ui.spinbox_resize_image_height.text()) # Target height for resizing, 0 means no resize
         
-        converter = Converter(
+        self.converter = Converter(
             output_directory = ui_output_file,
             output_extension_type = ui_output_extension_type,
             input_files_bulk = ui_input_files_bulk,
@@ -83,9 +119,12 @@ class MainWindow(QMainWindow):
             resize_height = ui_resize_height
         )
         
-        self.on_conversion_start_signals(converter)
-        converter.start_conversion_process()
-
+        self.on_conversion_start_signals(self.converter)
+        self.converter.start_conversion_process()
+        
+    
+    def item_path_splitter(self, text: str) -> str:
+        return text.split(" ----- ") #  -----  Separator set manually. Check class DroppableListWidget.
     
     def gather_items_for_bulk_conversion(self) -> List[Path]:
         try:
@@ -93,7 +132,8 @@ class MainWindow(QMainWindow):
             if not self.ui.listwidget_bulk_conversion.count() == 0:
                 for i in range(self.ui.listwidget_bulk_conversion.count()):
                     item = self.ui.listwidget_bulk_conversion.item(i)
-                    files.append(Path(item.text()))
+                    item_text = self.item_path_splitter(item.text())
+                    files.append(Path(item_text[0])) # Use only file path which is index 0
             return files
         except TypeError as te:
             message = f"An exception of TypeError occurred.\nError message: {str(te)}"
@@ -201,30 +241,7 @@ class MainWindow(QMainWindow):
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
             QMessageBox.critical(self, "An exception occurred in browse folder method", message)
-
-    def browse_save_file_as_helper(self, dialog_message: str, line_widget: QLineEdit, file_extension_filter: str) -> None:
-        """File dialog for file saving as, sets the path of the selected file in a specified QLineEdit Widget
-
-        Args:
-            dialog_message (str): Title message for the QFileDialog to display
-            line_widget (QLineEdit): The QLineEdit Widget to write to the path value as string
-            file_extension_filter (str): Filter files for selection based on set filter.
-
-                - Example for only XML files:
-                    - 'XML File (*.xml)'
-
-
-                - Example for multiple filters:
-                    - 'Images (*.png *.xpm *.jpg);;Text files (*.txt);;XML files (*.xml)'
-        """
-        try:
-            file_name, _ = QFileDialog.getSaveFileName(self, caption=dialog_message, filter=file_extension_filter)
-            if file_name:
-                line_widget.setText(file_name)
-        except Exception as ex:
-            message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
-            QMessageBox.critical(self, "An exception occurred in browse save file method",
-                                    f"Error exporting CSV: {message}")
+            
     
     def closeEvent(self, event: QCloseEvent):
         reply = QMessageBox.question(

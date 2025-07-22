@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ImageFileConverter.ui'
+## Form generated from reading UI file 'ImageFileConverterKPaAYO.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -28,17 +28,17 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.resize(1023, 762)
+        MainWindow.resize(1032, 750)
         font = QFont()
         font.setFamilies([u"Bookman Old Style"])
         font.setPointSize(12)
         font.setBold(False)
         MainWindow.setFont(font)
         icon = QIcon()
-        icon.addFile(u":/images/exchange-svgrepo-com.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/images/icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
         MainWindow.setStyleSheet(u"")
-        MainWindow.setIconSize(QSize(64, 64))
+        MainWindow.setIconSize(QSize(48, 48))
         MainWindow.setTabShape(QTabWidget.TabShape.Rounded)
         MainWindow.setDockNestingEnabled(False)
         self.centralwidget = QWidget(MainWindow)
@@ -253,7 +253,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_5.addWidget(self.label_7)
 
-        self.horizontalSpacer_4 = QSpacerItem(21, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_4 = QSpacerItem(60, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_5.addItem(self.horizontalSpacer_4)
 
@@ -262,6 +262,7 @@ class Ui_MainWindow(object):
         sizePolicy5.setHeightForWidth(self.line_edit_save_image_to.sizePolicy().hasHeightForWidth())
         self.line_edit_save_image_to.setSizePolicy(sizePolicy5)
         self.line_edit_save_image_to.setFont(font)
+        self.line_edit_save_image_to.setClearButtonEnabled(True)
 
         self.horizontalLayout_5.addWidget(self.line_edit_save_image_to)
 
@@ -295,7 +296,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(-1, 0, -1, 2)
         self.label_2 = QLabel(self.groupbox_options)
         self.label_2.setObjectName(u"label_2")
         sizePolicy4.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
@@ -324,6 +324,8 @@ class Ui_MainWindow(object):
         self.spinbox_resize_image_width.setSizePolicy(sizePolicy6)
         self.spinbox_resize_image_width.setFont(font)
         self.spinbox_resize_image_width.setStyleSheet(u"")
+        self.spinbox_resize_image_width.setMinimum(0)
+        self.spinbox_resize_image_width.setMaximum(9999)
 
         self.horizontalLayout_4.addWidget(self.spinbox_resize_image_width)
 
@@ -411,7 +413,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1023, 33))
+        self.menubar.setGeometry(QRect(0, 0, 1032, 33))
         self.menubar.setStyleSheet(u"")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
@@ -442,7 +444,7 @@ class Ui_MainWindow(object):
 
         self.combobox_extension_type.setPlaceholderText("")
         self.label_7.setStyleSheet(QCoreApplication.translate("MainWindow", u"color: rgb(125, 125, 186);", None))
-        self.label_7.setText(QCoreApplication.translate("MainWindow", u"Diretory to save to:", None))
+        self.label_7.setText(QCoreApplication.translate("MainWindow", u"Save image to:", None))
         self.line_edit_save_image_to.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Browse folder directory...", None))
         self.button_browse_save_image_to.setText(QCoreApplication.translate("MainWindow", u"Browse", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Resize image:", None))
