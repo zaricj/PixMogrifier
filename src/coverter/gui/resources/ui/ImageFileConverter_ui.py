@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ImageFileConverterKPaAYO.ui'
+## Form generated from reading UI file 'ImageFileConverterdKquYT.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -16,10 +16,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QGroupBox,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QMenuBar, QPushButton,
-    QSizePolicy, QSpacerItem, QSpinBox, QStatusBar,
-    QTabWidget, QTextEdit, QVBoxLayout, QWidget)
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QMainWindow, QMenuBar, QPushButton, QSizePolicy,
+    QSpacerItem, QSpinBox, QStatusBar, QTabWidget,
+    QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout,
+    QWidget)
 
 from resources.qrc import ImageFileConverter_rc
 
@@ -28,7 +29,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.resize(1032, 750)
+        MainWindow.resize(1036, 785)
         font = QFont()
         font.setFamilies([u"Bookman Old Style"])
         font.setPointSize(12)
@@ -108,19 +109,24 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.label_bulk_conversion)
 
-        self.listwidget_bulk_conversion = QListWidget(self.groupbox_bulk_conversion)
-        self.listwidget_bulk_conversion.setObjectName(u"listwidget_bulk_conversion")
-        self.listwidget_bulk_conversion.setEnabled(True)
+        self.tablewidget_bulk_conversion = QTableWidget(self.groupbox_bulk_conversion)
+        self.tablewidget_bulk_conversion.setObjectName(u"tablewidget_bulk_conversion")
+        self.tablewidget_bulk_conversion.setEnabled(True)
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.listwidget_bulk_conversion.sizePolicy().hasHeightForWidth())
-        self.listwidget_bulk_conversion.setSizePolicy(sizePolicy3)
-        self.listwidget_bulk_conversion.setMinimumSize(QSize(0, 200))
-        self.listwidget_bulk_conversion.setMaximumSize(QSize(999999, 99999))
-        self.listwidget_bulk_conversion.setAcceptDrops(True)
+        sizePolicy3.setHeightForWidth(self.tablewidget_bulk_conversion.sizePolicy().hasHeightForWidth())
+        self.tablewidget_bulk_conversion.setSizePolicy(sizePolicy3)
+        self.tablewidget_bulk_conversion.setMinimumSize(QSize(0, 200))
+        self.tablewidget_bulk_conversion.setMaximumSize(QSize(999999, 99999))
+        self.tablewidget_bulk_conversion.setAcceptDrops(True)
+        self.tablewidget_bulk_conversion.setStyleSheet(u"border:1px solid rgb(75, 75, 75);")
+        self.tablewidget_bulk_conversion.setRowCount(0)
+        self.tablewidget_bulk_conversion.setColumnCount(0)
+        self.tablewidget_bulk_conversion.horizontalHeader().setCascadingSectionResizes(True)
+        self.tablewidget_bulk_conversion.verticalHeader().setCascadingSectionResizes(True)
 
-        self.verticalLayout_4.addWidget(self.listwidget_bulk_conversion)
+        self.verticalLayout_4.addWidget(self.tablewidget_bulk_conversion)
 
         self.button_bulk_conversion_browse_files = QPushButton(self.groupbox_bulk_conversion)
         self.button_bulk_conversion_browse_files.setObjectName(u"button_bulk_conversion_browse_files")
@@ -344,6 +350,7 @@ class Ui_MainWindow(object):
         self.spinbox_resize_image_height.setSizePolicy(sizePolicy6)
         self.spinbox_resize_image_height.setFont(font)
         self.spinbox_resize_image_height.setStyleSheet(u"")
+        self.spinbox_resize_image_height.setMaximum(9999)
 
         self.horizontalLayout_4.addWidget(self.spinbox_resize_image_height)
 
@@ -392,14 +399,40 @@ class Ui_MainWindow(object):
         self.groupbox_image_info.setObjectName(u"groupbox_image_info")
         sizePolicy1.setHeightForWidth(self.groupbox_image_info.sizePolicy().hasHeightForWidth())
         self.groupbox_image_info.setSizePolicy(sizePolicy1)
-        self.groupbox_image_info.setMinimumSize(QSize(200, 0))
+        self.groupbox_image_info.setMinimumSize(QSize(250, 0))
         self.groupbox_image_info.setMaximumSize(QSize(350, 16777215))
         self.verticalLayout_2 = QVBoxLayout(self.groupbox_image_info)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.labe_metadata = QLabel(self.groupbox_image_info)
+        self.labe_metadata.setObjectName(u"labe_metadata")
+        sizePolicy2.setHeightForWidth(self.labe_metadata.sizePolicy().hasHeightForWidth())
+        self.labe_metadata.setSizePolicy(sizePolicy2)
+        self.labe_metadata.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout_2.addWidget(self.labe_metadata)
+
         self.text_edit_image_info = QTextEdit(self.groupbox_image_info)
         self.text_edit_image_info.setObjectName(u"text_edit_image_info")
+        sizePolicy5.setHeightForWidth(self.text_edit_image_info.sizePolicy().hasHeightForWidth())
+        self.text_edit_image_info.setSizePolicy(sizePolicy5)
+        self.text_edit_image_info.setMinimumSize(QSize(0, 200))
 
         self.verticalLayout_2.addWidget(self.text_edit_image_info)
+
+        self.label_image_preview_text = QLabel(self.groupbox_image_info)
+        self.label_image_preview_text.setObjectName(u"label_image_preview_text")
+        sizePolicy2.setHeightForWidth(self.label_image_preview_text.sizePolicy().hasHeightForWidth())
+        self.label_image_preview_text.setSizePolicy(sizePolicy2)
+        self.label_image_preview_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout_2.addWidget(self.label_image_preview_text)
+
+        self.label_image_preview = QLabel(self.groupbox_image_info)
+        self.label_image_preview.setObjectName(u"label_image_preview")
+        self.label_image_preview.setStyleSheet(u"background-color: rgb(45, 45, 45);\n"
+"border:1px solid rgb(75, 75, 75);")
+
+        self.verticalLayout_2.addWidget(self.label_image_preview)
 
 
         self.image_info_layout.addWidget(self.groupbox_image_info)
@@ -413,7 +446,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1032, 33))
+        self.menubar.setGeometry(QRect(0, 0, 1036, 33))
         self.menubar.setStyleSheet(u"")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
@@ -452,6 +485,11 @@ class Ui_MainWindow(object):
         self.spinbox_resize_image_width.setSpecialValueText("")
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"H:", None))
         self.button_convert.setText(QCoreApplication.translate("MainWindow", u"Convert", None))
-        self.groupbox_image_info.setTitle(QCoreApplication.translate("MainWindow", u"Image Information:", None))
+        self.groupbox_image_info.setTitle(QCoreApplication.translate("MainWindow", u"Image Information", None))
+        self.labe_metadata.setText(QCoreApplication.translate("MainWindow", u"Metadata:", None))
+        self.text_edit_image_info.setStyleSheet(QCoreApplication.translate("MainWindow", u"background-color: rgb(45, 45, 45);\n"
+"border:1px solid rgb(75, 75, 75);", None))
+        self.label_image_preview_text.setText(QCoreApplication.translate("MainWindow", u"Image Preview:", None))
+        self.label_image_preview.setText("")
     # retranslateUi
 
