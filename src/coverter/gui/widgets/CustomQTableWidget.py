@@ -47,7 +47,7 @@ class DroppableTableWidget(QTableWidget):
                     # Insert new row
                     row = self.rowCount()
                     self.insertRow(row)
-                    self.setItem(row, 0, QTableWidgetItem(item)) # Add the filename but internally it's the full path
+                    self.setItem(row, 0, item) # Add the filename but internally it's the full path
                     self.setItem(row, 1, QTableWidgetItem(str(f"{width}x{height}")))
                     self.setItem(row, 2, QTableWidgetItem(str(extension)))
 
