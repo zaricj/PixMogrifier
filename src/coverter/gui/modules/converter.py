@@ -4,9 +4,7 @@ from pydantic import BaseModel
 from typing import List, Tuple, ClassVar, Optional
 
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QMenu, QFileDialog, QMessageBox, QInputDialog, QLineEdit)
-from PySide6.QtGui import QIcon, QAction, QCloseEvent, QShortcut, QKeySequence
-from PySide6.QtCore import Qt, Signal, Slot, QFile, QTextStream, QIODevice, QSettings, QThreadPool, QObject
+from PySide6.QtCore import Signal, QObject
 
 class ConverterSignals(QObject):
     progress_text = Signal(str)
