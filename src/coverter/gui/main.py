@@ -3,12 +3,14 @@ import sys
 from pathlib import Path
 from typing import List
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QMessageBox, QLineEdit)
+from PIL import Image
+
+from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QMessageBox, QLineEdit, QTableWidgetItem)
 from PySide6.QtGui import QCloseEvent
-from PySide6.QtCore import Slot, QSettings
+from PySide6.QtCore import Slot, QSettings, Qt
 
 from resources.ui.ImageFileConverter_ui import Ui_MainWindow
-from widgets.droppable_qlistwidget import DroppableListWidget
+from widgets.CustomQTableWidget import DroppableTableWidget
 from modules.converter import Converter
 
 # Constants
@@ -27,7 +29,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         
-        self.replace_listwidget_with_custom()
+        self.replace_tablewidget_with_custom()
         self.setup_connections()
         self.setup_converter_object()
 
@@ -37,11 +39,19 @@ class MainWindow(QMainWindow):
         # Window geometry restoration
         geometry = self.settings.value("geometry", bytes())
         if geometry:
-            self.restoreGeometry(geometry)  
+            self.restoreGeometry(geometry)
     
     
     def setup_connections(self):
-
+        # Setup the Qtablewidget and it's headers
+        self.ui.tablewidget_bulk_conversion.setColumnCount(3)
+        self.ui.tablewidget_bulk_conversion.setHorizontalHeaderLabels(["Filename", "Width x Height", "Extension"])
+        self.ui.tablewidget_bulk_conversion.resizeColumnsToContents()
+        self.ui.tablewidget_bulk_conversion.setColumnWidth(0, 200)
+        self.ui.tablewidget_bulk_conversion.setColumnWidth(1, 200)
+        self.ui.tablewidget_bulk_conversion.setColumnWidth(2, 200)
+        
+        # Main button event of the whole app!
         self.ui.button_convert.clicked.connect(self.on_conversion_start)
         
         # Browse Buttons Connections
@@ -53,12 +63,12 @@ class MainWindow(QMainWindow):
         self.ui.button_remove_all.clicked.connect(self.on_remove_all)
         
         # ListWidget click event
-        self.ui.listwidget_bulk_conversion.itemClicked.connect(self.set_image_width_and_height_in_spinbox)
+        self.ui.tablewidget_bulk_conversion.itemClicked.connect(self.set_image_width_and_height_in_spinbox)
         
 
     def setup_converter_object(self):
         ui_output_file: Path = "" # For single file = full path, for bulk = output directory
-        ui_output_extension_type  = "" # Target extension, e.g., "png", "ico"
+        ui_output_extension_type: str  = "" # Target extension, e.g., "png", "ico"
         ui_input_files_bulk = [] # List of files for bulk conversion
         ui_resize_width  = 0 # Target width for resizing, 0 means no resize
         ui_resize_height = 0 # Target height for resizing, 0 means no resize
@@ -72,38 +82,39 @@ class MainWindow(QMainWindow):
         )
     
     
-    def replace_listwidget_with_custom(self):
-        parent = self.ui.listwidget_bulk_conversion.parent()
-        layout = self.ui.listwidget_bulk_conversion.parent().layout()
-        old_widget = self.ui.listwidget_bulk_conversion
+    def replace_tablewidget_with_custom(self):
+        parent = self.ui.tablewidget_bulk_conversion.parent()
+        layout = self.ui.tablewidget_bulk_conversion.parent().layout()
+        old_widget = self.ui.tablewidget_bulk_conversion
 
         index = layout.indexOf(old_widget)
         layout.removeWidget(old_widget)
         old_widget.deleteLater()
 
-        custom_widget = DroppableListWidget(parent, self.ui)
-        custom_widget.setObjectName("listwidget_bulk_conversion")
+        custom_widget = DroppableTableWidget(parent, self.ui)
+        custom_widget.setObjectName("tablewidget_bulk_conversion")
         layout.insertWidget(index, custom_widget)
 
-        self.ui.listwidget_bulk_conversion = custom_widget
+        self.ui.tablewidget_bulk_conversion = custom_widget
         
     
     def set_image_width_and_height_in_spinbox(self):
-        current_row = self.ui.listwidget_bulk_conversion.currentRow()
+        current_row = self.ui.tablewidget_bulk_conversion.currentRow()
         if current_row == -1:
             return  # No selection made
 
-        item = self.ui.listwidget_bulk_conversion.item(current_row)
-        path_text = self.item_path_splitter(item.text())
-        image_path = Path(path_text[0])
+        item = self.ui.tablewidget_bulk_conversion.item(current_row, 0)
+        if item is not None: # Check after remove
+            image_path = Path(item.data(Qt.UserRole))  # Use stored full path
 
-        size = self.converter.get_selected_image_size(image_path)
-        if size is not None:
-            width, height = size
-            self.ui.spinbox_resize_image_width.setValue(width)
-            self.ui.spinbox_resize_image_height.setValue(height)
+            size = self.converter.get_selected_image_size(image_path)
+            if size is not None:
+                width, height = size
+                self.ui.spinbox_resize_image_width.setValue(width)
+                self.ui.spinbox_resize_image_height.setValue(height)
 
-        
+
+    # Main method which converts all images that have been added to list
     def on_conversion_start(self):
         ui_output_file = Path(self.ui.line_edit_save_image_to.text()) # For single file = full path, for bulk = output directory
         ui_output_extension_type  = self.ui.combobox_extension_type.currentText() # Target extension, e.g., "png", "ico"
@@ -119,21 +130,19 @@ class MainWindow(QMainWindow):
             resize_height = ui_resize_height
         )
         
-        self.on_conversion_start_signals(self.converter)
+        self._on_conversion_start_signals(self.converter)
         self.converter.start_conversion_process()
         
-    
-    def item_path_splitter(self, text: str) -> str:
-        return text.split(" ----- ") #  -----  Separator set manually. Check class DroppableListWidget.
     
     def gather_items_for_bulk_conversion(self) -> List[Path]:
         try:
             files: List[Path] = [] 
-            if not self.ui.listwidget_bulk_conversion.count() == 0:
-                for i in range(self.ui.listwidget_bulk_conversion.count()):
-                    item = self.ui.listwidget_bulk_conversion.item(i)
-                    item_text = self.item_path_splitter(item.text())
-                    files.append(Path(item_text[0])) # Use only file path which is index 0
+            if self.ui.tablewidget_bulk_conversion.rowCount():
+                for i in range(self.ui.tablewidget_bulk_conversion.rowCount()):
+                    item = self.ui.tablewidget_bulk_conversion.item(i, 0) # Row is i, Column is 0 which is the filename 
+                    full_path = item.data(Qt.UserRole) # Gets the hidden file path
+                    print(f"Gather Itmes for Bulk Conv, variable 'full_path'={full_path}")
+                    files.append(Path(full_path)) # Use only file path which is index 0
             return files
         except TypeError as te:
             message = f"An exception of TypeError occurred.\nError message: {str(te)}"
@@ -142,10 +151,13 @@ class MainWindow(QMainWindow):
             
     def on_remove_item(self) -> None:
         try:
-            current_item_text = self.ui.listwidget_bulk_conversion.currentItem().text()
-            current_item_row = self.ui.listwidget_bulk_conversion.currentRow()
+            current_item_text = self.ui.tablewidget_bulk_conversion.currentItem().text()
+            current_item_row = self.ui.tablewidget_bulk_conversion.currentRow()
             if current_item_row != -1:
-                self.ui.listwidget_bulk_conversion.takeItem(current_item_row)
+                self.ui.tablewidget_bulk_conversion.removeRow(current_item_row)
+                # Reset the spinboxes to 0
+                self.ui.spinbox_resize_image_width.setValue(0)
+                self.ui.spinbox_resize_image_height.setValue(0)
                 self.ui.statusbar.showMessage(f"Removed {current_item_text} from list.", 6000)
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
@@ -154,11 +166,11 @@ class MainWindow(QMainWindow):
             
     def on_remove_all(self) -> None:
         try:
-            reply = QMessageBox.question("Delete all items", "Do you really want to clear the list?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            reply = QMessageBox.question(self, "Delete all items", "Do you really want to clear the list?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             
             if reply == QMessageBox.Yes:
-                if self.ui.listwidget_bulk_conversion.count() > 0:
-                    self.ui.listwidget_bulk_conversion.clear()
+                if self.ui.tablewidget_bulk_conversion.rowCount() > 0:
+                    self.ui.tablewidget_bulk_conversion.clear()
                     self.ui.statusbar.showMessage("Deleted all items from list.", 6000)
                 else:
                     self.ui.statusbar.showMessage("No items to delete.", 6000)
@@ -169,7 +181,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, f"Exception {type(ex).__name__}", message)
             
             
-    def on_conversion_start_signals(self, worker):
+    def _on_conversion_start_signals(self, worker):
         worker.signals.progress_text.connect(self.on_progress_text)
         worker.signals.messagebox_error.connect(self.on_messagebox_error)
         worker.signals.messagebox_warning.connect(self.on_messagebox_warning)
@@ -193,12 +205,51 @@ class MainWindow(QMainWindow):
 
     # === Helper Methods === #
     
+    def get_image_file_data(self, file_path: str) -> tuple[str, str, int, int]:
+        """_summary_
+
+        Args:
+            file_path (str): _description_
+
+        Returns:
+            tuple[str, str, int, int]: Filename (str), Extension (str), Width (int), Height (int)
+        """
+        try:
+            # Convert the string path to a Path object
+            full_path = Path(file_path)
+            file_name = full_path.name
+            extension = full_path.suffix
+                    
+            with Image.open(file_path) as image:
+                width, height = image.width, image.height
+            
+            return file_name, extension, width, height
+                
+        except Exception as ex:
+            message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
+            QMessageBox.critical(self, f"Exception {type(ex).__name__}", message)
+            
+            
     def bulk_conversion_browse_files(self):
         try:
             file_paths, filters = QFileDialog.getOpenFileNames(self, "Browse Files", "", "Image Files (*.png *.jpeg *.jpg *.ico)")
             if file_paths:
                 for file_path in file_paths:
-                    self.ui.listwidget_bulk_conversion.addItem(file_path)
+                    
+                    file_name, extension, width, height = self.get_image_file_data(file_path)
+                        
+                    # QTableWidgetItems
+                    item = QTableWidgetItem(file_name)
+                    item.setData(Qt.UserRole, Path(file_path))
+                    item.setToolTip(file_path)
+                    
+                    # Insert new row
+                    row = self.ui.tablewidget_bulk_conversion.rowCount()
+                    self.ui.tablewidget_bulk_conversion.insertRow(row)
+                    self.ui.tablewidget_bulk_conversion.setItem(row, 0, QTableWidgetItem(item)) # Add the filename but internally it's the full path
+                    self.ui.tablewidget_bulk_conversion.setItem(row, 1, QTableWidgetItem(str(f"{width}x{height}")))
+                    self.ui.tablewidget_bulk_conversion.setItem(row, 2, QTableWidgetItem(str(extension)))
+                    
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
             QMessageBox.critical(self, f"Exception {type(ex).__name__}", message)
@@ -219,6 +270,7 @@ class MainWindow(QMainWindow):
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
             QMessageBox.critical(self, "An exception occurred in browse folder method", message)
+
 
     def browse_file_helper(self, dialog_message: str, line_widget: QLineEdit, file_extension_filter: str) -> None:
         """File dialog for file browsing, sets the path of the selected file in a specified QLineEdit Widget
