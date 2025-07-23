@@ -11,7 +11,7 @@ from PySide6.QtCore import Slot, QSettings, Qt
 
 from resources.ui.ImageFileConverter_ui import Ui_MainWindow
 from widgets.CustomQTableWidget import DroppableTableWidget
-from modules.converter import Converter
+from modules.converter import Converter, ConversionSettings
 
 # Constants
 APP_NAME: str = "Image Converter"
@@ -31,7 +31,11 @@ class MainWindow(QMainWindow):
         
         self.replace_tablewidget_with_custom()
         self.setup_connections()
-        self.setup_converter_object()
+        
+        # Init the converter object
+        self.converter = Converter()
+        self.on_conversion_start_signals(self.converter)
+
 
         # Settings file for storing application settings
         self.settings = QSettings("Jovan", "ImageConverter")
@@ -65,23 +69,7 @@ class MainWindow(QMainWindow):
         # ListWidget click event
         self.ui.tablewidget_bulk_conversion.itemClicked.connect(self.set_image_width_and_height_in_spinbox)
         
-
-    def setup_converter_object(self):
-        ui_output_file: Path = "" # For single file = full path, for bulk = output directory
-        ui_output_extension_type: str  = "" # Target extension, e.g., "png", "ico"
-        ui_input_files_bulk = [] # List of files for bulk conversion
-        ui_resize_width  = 0 # Target width for resizing, 0 means no resize
-        ui_resize_height = 0 # Target height for resizing, 0 means no resize
         
-        self.converter = Converter(
-            output_directory = ui_output_file,
-            output_extension_type = ui_output_extension_type,
-            input_files_bulk = ui_input_files_bulk,
-            resize_width = ui_resize_width,
-            resize_height = ui_resize_height
-        )
-    
-    
     def replace_tablewidget_with_custom(self):
         parent = self.ui.tablewidget_bulk_conversion.parent()
         layout = self.ui.tablewidget_bulk_conversion.parent().layout()
@@ -107,7 +95,7 @@ class MainWindow(QMainWindow):
         if item is not None: # Check after remove
             image_path = Path(item.data(Qt.UserRole))  # Use stored full path
 
-            size = self.converter.get_selected_image_size(image_path)
+            size = Converter.get_selected_image_size(image_path)
             if size is not None:
                 width, height = size
                 self.ui.spinbox_resize_image_width.setValue(width)
@@ -122,17 +110,14 @@ class MainWindow(QMainWindow):
         ui_resize_width  = int(self.ui.spinbox_resize_image_width.text()) # Target width for resizing, 0 means no resize
         ui_resize_height = int(self.ui.spinbox_resize_image_height.text()) # Target height for resizing, 0 means no resize
         
-        self.converter = Converter(
-            output_directory = ui_output_file,
-            output_extension_type = ui_output_extension_type,
-            input_files_bulk = ui_input_files_bulk,
-            resize_width = ui_resize_width,
-            resize_height = ui_resize_height
-        )
-        
-        self._on_conversion_start_signals(self.converter)
+        self.converter.settings.output_directory = ui_output_file
+        self.converter.settings.output_extension_type = ui_output_extension_type
+        self.converter.settings.input_files_bulk = ui_input_files_bulk
+        self.converter.settings.resize_width = ui_resize_width
+        self.converter.settings.resize_height = ui_resize_height
+    
         self.converter.start_conversion_process()
-        
+    
     
     def gather_items_for_bulk_conversion(self) -> List[Path]:
         try:
@@ -170,7 +155,9 @@ class MainWindow(QMainWindow):
             
             if reply == QMessageBox.Yes:
                 if self.ui.tablewidget_bulk_conversion.rowCount() > 0:
-                    self.ui.tablewidget_bulk_conversion.clear()
+                    all_rows = self.ui.tablewidget_bulk_conversion.rowCount()
+                    for i in reversed(range(0, all_rows)):
+                        self.ui.tablewidget_bulk_conversion.removeRow(i)
                     self.ui.statusbar.showMessage("Deleted all items from list.", 6000)
                 else:
                     self.ui.statusbar.showMessage("No items to delete.", 6000)
@@ -181,7 +168,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, f"Exception {type(ex).__name__}", message)
             
             
-    def _on_conversion_start_signals(self, worker):
+    def on_conversion_start_signals(self, worker):
         worker.signals.progress_text.connect(self.on_progress_text)
         worker.signals.messagebox_error.connect(self.on_messagebox_error)
         worker.signals.messagebox_warning.connect(self.on_messagebox_warning)
@@ -205,30 +192,6 @@ class MainWindow(QMainWindow):
 
     # === Helper Methods === #
     
-    def get_image_file_data(self, file_path: str) -> tuple[str, str, int, int]:
-        """_summary_
-
-        Args:
-            file_path (str): _description_
-
-        Returns:
-            tuple[str, str, int, int]: Filename (str), Extension (str), Width (int), Height (int)
-        """
-        try:
-            # Convert the string path to a Path object
-            full_path = Path(file_path)
-            file_name = full_path.name
-            extension = full_path.suffix
-                    
-            with Image.open(file_path) as image:
-                width, height = image.width, image.height
-            
-            return file_name, extension, width, height
-                
-        except Exception as ex:
-            message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
-            QMessageBox.critical(self, f"Exception {type(ex).__name__}", message)
-            
             
     def bulk_conversion_browse_files(self):
         try:
@@ -236,7 +199,9 @@ class MainWindow(QMainWindow):
             if file_paths:
                 for file_path in file_paths:
                     
-                    file_name, extension, width, height = self.get_image_file_data(file_path)
+                    file_data = self.converter.get_image_file_data(Path(file_path))
+                    if file_data:
+                        file_name, extension, width, height = file_data
                         
                     # QTableWidgetItems
                     item = QTableWidgetItem(file_name)
@@ -246,7 +211,7 @@ class MainWindow(QMainWindow):
                     # Insert new row
                     row = self.ui.tablewidget_bulk_conversion.rowCount()
                     self.ui.tablewidget_bulk_conversion.insertRow(row)
-                    self.ui.tablewidget_bulk_conversion.setItem(row, 0, QTableWidgetItem(item)) # Add the filename but internally it's the full path
+                    self.ui.tablewidget_bulk_conversion.setItem(row, 0, item) # Add the filename but internally it's the full path
                     self.ui.tablewidget_bulk_conversion.setItem(row, 1, QTableWidgetItem(str(f"{width}x{height}")))
                     self.ui.tablewidget_bulk_conversion.setItem(row, 2, QTableWidgetItem(str(extension)))
                     
