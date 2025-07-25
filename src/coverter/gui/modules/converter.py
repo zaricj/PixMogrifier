@@ -2,11 +2,15 @@ from PIL import Image
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Tuple, ClassVar, Optional
-
 from PySide6.QtCore import Signal, QObject
 
+# Constants for username and temp path
+
+TEMP: Path = Path(r"C:\tmp")
+
+
 class ConversionSettings(BaseModel):
-    output_directory: Path = Path()                        # default to current dir
+    output_directory: Path = Path() # default to current dir
     output_extension_type: str = ""
     input_files_bulk: List[Path] = Field(default_factory=list)
     resize_width: int = 0
@@ -104,9 +108,46 @@ class Converter(BaseModel):
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} occurred. Arguments: {ex.args!r}"
             Converter.signals.messagebox_error.emit(f"Exception {type(ex).__name__}", message)
+    
+    @staticmethod
+    def resize_image_for_preview(input_file: Path) -> Path:
+        """Returns the image in a resized form for the preview and saves it in the temp folder C:\temp
 
+        Args:
+            input_file (Path): Path object of image file
 
-    def perform_conversion(self, input_path: Path, output_path: Path) -> bool:
+        Returns:
+            Path: Path object of image file in temp
+        """
+        try:
+            # Check if it temp folder exists
+            if not TEMP.exists():
+                TEMP.mkdir(parents=True, exist_ok=True)
+                
+            with Image.open(input_file) as im:
+                im = im.resize((96, 96))
+                output_path = Path(TEMP) / input_file.name
+            # Save to temp folder
+                im.save(output_path)
+
+            return output_path
+            
+        except Exception as ex:
+            message = f"Error resizing image {input_file.name}: {type(ex).__name__} - {str(ex)}"
+            Converter.signals.messagebox_error.emit("Error resizing image", message)
+            
+    @staticmethod
+    def cleanup_temp_folder() -> None:
+        """Clean up the temp folder
+        """
+        try:
+            files = [f for f in TEMP.iterdir() if f.is_file()]
+            for file in files:
+                Path.unlink(file)
+        except FileNotFoundError as ex:
+            Converter.signals.messagebox_error.emit("FileNotFoundError", str(ex))
+
+    def perform_conversion(self, input_file: Path, output_path: Path) -> bool:
         """
         Performs the actual image conversion for a single file, including resizing if specified.
         
@@ -114,7 +155,7 @@ class Converter(BaseModel):
             bool: True if conversion successful, False otherwise
         """
         try:
-            with Image.open(input_path) as im:
+            with Image.open(input_file) as im:
                 # Perform resizing if dimensions are provided
                 if self.settings.resize_width > 0 and self.settings.resize_height > 0:
                     im = im.resize((self.settings.resize_width, self.settings.resize_height))
@@ -123,11 +164,10 @@ class Converter(BaseModel):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 
                 im.save(output_path)
-                Converter.signals.progress_text.emit(f"Converted: {input_path.name} -> {output_path.name}")
+                Converter.signals.progress_text.emit(f"Converted: {input_file.name} -> {output_path.name}")
                 return True
         except Exception as ex:
-            message = f"Error converting {input_path.name}: {type(ex).__name__} - {str(ex)}"
-            print(message)
+            message = f"Error converting {input_file.name}: {type(ex).__name__} - {str(ex)}"
             Converter.signals.messagebox_error.emit("Conversion Error", message)
             return False
 
