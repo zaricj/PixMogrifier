@@ -3,15 +3,14 @@ import sys
 from pathlib import Path
 from typing import List
 
-from PIL import Image
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QMessageBox, QLineEdit, QTableWidgetItem)
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QPixmap
 from PySide6.QtCore import Slot, QSettings, Qt
 
 from resources.ui.ImageFileConverter_ui import Ui_MainWindow
 from widgets.CustomQTableWidget import DroppableTableWidget
-from modules.converter import Converter, ConversionSettings
+from modules.converter import Converter
 
 # Constants
 APP_NAME: str = "Image Converter"
@@ -55,6 +54,7 @@ class MainWindow(QMainWindow):
         self.ui.tablewidget_bulk_conversion.setColumnWidth(1, 200)
         self.ui.tablewidget_bulk_conversion.setColumnWidth(2, 200)
         
+        
         # Main button event of the whole app!
         self.ui.button_convert.clicked.connect(self.on_conversion_start)
         
@@ -87,19 +87,35 @@ class MainWindow(QMainWindow):
         
     
     def set_image_width_and_height_in_spinbox(self):
-        current_row = self.ui.tablewidget_bulk_conversion.currentRow()
-        if current_row == -1:
-            return  # No selection made
+        try:
+            current_row = self.ui.tablewidget_bulk_conversion.currentRow()
+            if current_row == -1:
+                return  # No selection made
 
-        item = self.ui.tablewidget_bulk_conversion.item(current_row, 0)
-        if item is not None: # Check after remove
-            image_path = Path(item.data(Qt.UserRole))  # Use stored full path
+            item = self.ui.tablewidget_bulk_conversion.item(current_row, 0)
+            if item is not None: # Check after remove
+                image_path = Path(item.data(Qt.UserRole))  # Use stored full path
 
-            size = Converter.get_selected_image_size(image_path)
-            if size is not None:
-                width, height = size
-                self.ui.spinbox_resize_image_width.setValue(width)
-                self.ui.spinbox_resize_image_height.setValue(height)
+                size = Converter.get_selected_image_size(image_path)
+                if size is not None:
+                    width, height = size
+                    self.ui.spinbox_resize_image_width.setValue(width)
+                    self.ui.spinbox_resize_image_height.setValue(height)
+
+                # Set image preview at the same time
+                preview_ready_image = Converter.resize_image_for_preview(image_path)
+                self.set_preview_image(preview_ready_image)
+                
+        except Exception as ex:
+            QMessageBox.critical(self, f"{type(ex).__name__} Exception", str(ex))
+    
+    # Label Image Preview method
+    def set_preview_image(self, input_file: Path) -> None:
+        try:
+            pix = QPixmap(input_file)
+            self.ui.label_image_preview.setPixmap(pix)
+        except Exception as ex:
+            QMessageBox.critical(self, f"{type(ex).__name__} Exception", str(ex))
 
 
     # Main method which converts all images that have been added to list
@@ -269,6 +285,7 @@ class MainWindow(QMainWindow):
             event.ignore()
             return
         else:
+            Converter.cleanup_temp_folder()
             self.settings.setValue("geometry", self.saveGeometry())
             super().closeEvent(event)
 
