@@ -8,7 +8,6 @@ from PySide6.QtCore import Signal, QObject
 
 TEMP: Path = Path(r"C:\tmp")
 
-
 class ConversionSettings(BaseModel):
     output_directory: Path = Path() # default to current dir
     output_extension_type: str = ""
@@ -18,7 +17,7 @@ class ConversionSettings(BaseModel):
 
 
 class ConverterSignals(QObject):
-    progress_text = Signal(str)
+    statusbar_progress_text = Signal(str)
     messagebox_error = Signal(str, str)
     messagebox_warning = Signal(str, str)
     messagebox_info = Signal(str, str)
@@ -61,7 +60,7 @@ class Converter(BaseModel):
             return True
         except ValueError as ve:
             message = f"An exception of type {type(ve).__name__} has occurred.\nError Message: {str(ve)}"
-            Converter.signals.messagebox_error.emit("Check Error", message)
+            Converter.signals.statusbar_progress_text.emit("Check Error:", message)
             return False
         
     @staticmethod
@@ -110,7 +109,7 @@ class Converter(BaseModel):
             Converter.signals.messagebox_error.emit(f"Exception {type(ex).__name__}", message)
     
     @staticmethod
-    def resize_image_for_preview(input_file: Path) -> Path:
+    def resize_image_for_preview(input_file: Path, width: int, height: int) -> Path:
         """Returns the image in a resized form for the preview and saves it in the temp folder C:\temp
 
         Args:
@@ -125,7 +124,7 @@ class Converter(BaseModel):
                 TEMP.mkdir(parents=True, exist_ok=True)
                 
             with Image.open(input_file) as im:
-                im = im.resize((96, 96))
+                im = im.resize((width, height))
                 output_path = Path(TEMP) / input_file.name
             # Save to temp folder
                 im.save(output_path)
@@ -164,7 +163,7 @@ class Converter(BaseModel):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 
                 im.save(output_path)
-                Converter.signals.progress_text.emit(f"Converted: {input_file.name} -> {output_path.name}")
+                Converter.signals.statusbar_progress_text.emit(f"Converted: {input_file.name} -> {output_path.name}")
                 return True
         except Exception as ex:
             message = f"Error converting {input_file.name}: {type(ex).__name__} - {str(ex)}"
@@ -229,9 +228,9 @@ class Converter(BaseModel):
                 Converter.signals.messagebox_error.emit("Conversion Error", "Please select a valid output file extension.")
                 return
 
-            Converter.signals.progress_text.emit("Starting bulk conversion...")
+            Converter.signals.statusbar_progress_text.emit("Starting bulk conversion...")
             self.perform_bulk_conversion()
-            Converter.signals.progress_text.emit("Bulk conversion process completed.")
+            Converter.signals.statusbar_progress_text.emit("Bulk conversion process completed.")
 
         except Exception as ex:
             message = f"An exception of type {type(ex).__name__} has occurred.\nError Message: {str(ex)}"

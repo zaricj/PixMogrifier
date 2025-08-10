@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         layout.insertWidget(index, custom_widget)
 
         self.ui.tablewidget_bulk_conversion = custom_widget
-        
+
     
     def set_image_width_and_height_in_spinbox(self):
         try:
@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
                     self.ui.spinbox_resize_image_height.setValue(height)
 
                 # Set image preview at the same time
-                preview_ready_image = Converter.resize_image_for_preview(image_path)
+                preview_ready_image = Converter.resize_image_for_preview(image_path, 400, 500)
                 self.set_preview_image(preview_ready_image)
                 
         except Exception as ex:
@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
             
             
     def on_conversion_start_signals(self, worker):
-        worker.signals.progress_text.connect(self.on_progress_text)
+        worker.signals.statusbar_progress_text.connect(self.on_progress_text)
         worker.signals.messagebox_error.connect(self.on_messagebox_error)
         worker.signals.messagebox_warning.connect(self.on_messagebox_warning)
         worker.signals.messagebox_info.connect(self.on_messagebox_info)

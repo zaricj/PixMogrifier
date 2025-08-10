@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\coverter",
+    "\\src\\coverter\\gui",
+    "\\src\\coverter\\gui\\modules"
+  ],
+  "SelectedNode": "\\src\\coverter\\gui\\modules\\converter.py",
+  "PreviewInSolutionExplorer": false
+}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ImageFileConverterdKquYT.ui'
+## Form generated from reading UI file 'ImageFileConvertereGxEAr.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -84,8 +84,8 @@ class Ui_MainWindow(object):
 
         self.main = QHBoxLayout()
         self.main.setObjectName(u"main")
-        self.verticalLayout_7 = QVBoxLayout()
-        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.main_vertical_layout_for_the_last_time = QVBoxLayout()
+        self.main_vertical_layout_for_the_last_time.setObjectName(u"main_vertical_layout_for_the_last_time")
         self.groupbox_bulk_conversion = QGroupBox(self.centralwidget)
         self.groupbox_bulk_conversion.setObjectName(u"groupbox_bulk_conversion")
         self.groupbox_bulk_conversion.setEnabled(True)
@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addLayout(self.horizontalLayout_clear_listwidget)
 
 
-        self.verticalLayout_7.addWidget(self.groupbox_bulk_conversion)
+        self.main_vertical_layout_for_the_last_time.addWidget(self.groupbox_bulk_conversion)
 
         self.groupbox_options = QGroupBox(self.centralwidget)
         self.groupbox_options.setObjectName(u"groupbox_options")
@@ -388,10 +388,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.button_convert)
 
 
-        self.verticalLayout_7.addWidget(self.groupbox_options)
+        self.main_vertical_layout_for_the_last_time.addWidget(self.groupbox_options)
 
 
-        self.main.addLayout(self.verticalLayout_7)
+        self.main.addLayout(self.main_vertical_layout_for_the_last_time)
 
         self.image_info_layout = QVBoxLayout()
         self.image_info_layout.setObjectName(u"image_info_layout")
@@ -431,6 +431,7 @@ class Ui_MainWindow(object):
         self.label_image_preview.setObjectName(u"label_image_preview")
         self.label_image_preview.setStyleSheet(u"background-color: rgb(45, 45, 45);\n"
 "border:1px solid rgb(75, 75, 75);")
+        self.label_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_2.addWidget(self.label_image_preview)
 
