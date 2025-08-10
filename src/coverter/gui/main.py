@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from typing import List
 
-
+from PySide6 import QtWidgets
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QMessageBox, QLineEdit, QTableWidgetItem)
 from PySide6.QtGui import QCloseEvent, QPixmap
 from PySide6.QtCore import Slot, QSettings, Qt
@@ -49,10 +49,10 @@ class MainWindow(QMainWindow):
         # Setup the Qtablewidget and it's headers
         self.ui.tablewidget_bulk_conversion.setColumnCount(3)
         self.ui.tablewidget_bulk_conversion.setHorizontalHeaderLabels(["Filename", "Width x Height", "Extension"])
-        self.ui.tablewidget_bulk_conversion.resizeColumnsToContents()
-        self.ui.tablewidget_bulk_conversion.setColumnWidth(0, 200)
-        self.ui.tablewidget_bulk_conversion.setColumnWidth(1, 200)
-        self.ui.tablewidget_bulk_conversion.setColumnWidth(2, 200)
+        header = self.ui.tablewidget_bulk_conversion.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         
         
         # Main button event of the whole app!
